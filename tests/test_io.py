@@ -47,11 +47,14 @@ def test_read_bytes_from_stdin(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_read_bytes_stdin_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """Verifies that OSError on standard input is converted to DHIOError."""
+
     class BrokenStdin:
         def read(self) -> bytes:
             raise OSError("stdin broken")
 
-    monkeypatch.setattr("sys.stdin", type("StdinWrapper", (), {"buffer": BrokenStdin()})())
+    monkeypatch.setattr(
+        "sys.stdin", type("StdinWrapper", (), {"buffer": BrokenStdin()})()
+    )
 
     with pytest.raises(DHIOError, match="cannot read from stdin"):
         read_bytes("-")
@@ -79,6 +82,7 @@ def test_write_bytes_to_stdout(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_write_bytes_stdout_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """Verifies that OSError on standard output is converted to DHIOError."""
+
     class BrokenStdout:
         def write(self, data: bytes) -> int:
             raise OSError("stdout broken")
@@ -86,7 +90,9 @@ def test_write_bytes_stdout_error(monkeypatch: pytest.MonkeyPatch) -> None:
         def flush(self) -> None:
             pass
 
-    monkeypatch.setattr("sys.stdout", type("StdoutWrapper", (), {"buffer": BrokenStdout()})())
+    monkeypatch.setattr(
+        "sys.stdout", type("StdoutWrapper", (), {"buffer": BrokenStdout()})()
+    )
 
     with pytest.raises(DHIOError, match="cannot write to stdout"):
         write_bytes("-", b"payload")

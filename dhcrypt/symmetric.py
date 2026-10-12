@@ -28,7 +28,7 @@ class SymmetricCipher(Protocol):
         Returns:
             Encrypted ciphertext bytes including nonce and authentication tag.
         """
-        ...
+        pass
 
     def decrypt(self, key: bytes, encrypted_payload: bytes) -> bytes:
         """Decrypts payload using the provided key.
@@ -40,7 +40,7 @@ class SymmetricCipher(Protocol):
         Returns:
             Decrypted plaintext bytes.
         """
-        ...
+        pass
 
 
 class AESGCMSymmetricCipher:

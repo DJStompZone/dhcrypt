@@ -1,8 +1,8 @@
 """dhcrypt: OpenSSL-interoperable Diffie-Hellman key exchange and AES-256-GCM encryption.
 
-A production-ready cryptographic library and command-line utility providing
-finite-field Diffie-Hellman parameter generation, key generation, key agreement,
-and authenticated symmetric encryption.
+A cryptographic library and command-line utility providing finite-field
+Diffie-Hellman parameter generation, key generation, key agreement, and
+authenticated symmetric encryption.
 """
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ from dhcrypt.symmetric import (
     encrypt_payload,
 )
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 __all__ = [
     "__version__",

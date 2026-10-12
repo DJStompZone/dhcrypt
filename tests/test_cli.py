@@ -7,7 +7,9 @@ import pytest
 from dhcrypt.cli import main
 
 
-def test_cli_end_to_end_workflow(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cli_end_to_end_workflow(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Tests complete CLI workflow through all subcommands and verifies roundtrip encryption."""
     params_path = tmp_path / "dhp.pem"
     alice_priv = tmp_path / "alice.pem"
@@ -26,123 +28,195 @@ def test_cli_end_to_end_workflow(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert rc == 0
     assert params_path.exists()
 
-    rc = main([
-        "keygen",
-        "-p", str(params_path),
-        "--priv", str(alice_priv),
-        "--pub", str(alice_pub),
-        "--private-length", "128",
-    ])
+    rc = main(
+        [
+            "keygen",
+            "-p",
+            str(params_path),
+            "--priv",
+            str(alice_priv),
+            "--pub",
+            str(alice_pub),
+            "--private-length",
+            "128",
+        ]
+    )
     assert rc == 0
     assert alice_priv.exists()
     assert alice_pub.exists()
 
-    rc = main([
-        "keygen",
-        "-p", str(params_path),
-        "--priv", str(bob_priv),
-        "--pub", str(bob_pub),
-    ])
+    rc = main(
+        [
+            "keygen",
+            "-p",
+            str(params_path),
+            "--priv",
+            str(bob_priv),
+            "--pub",
+            str(bob_pub),
+        ]
+    )
     assert rc == 0
 
-    rc_fail = main([
-        "keygen",
-        "-p", str(params_path),
-        "--priv", str(alice_priv),
-        "--pub", str(alice_pub),
-    ])
+    rc_fail = main(
+        [
+            "keygen",
+            "-p",
+            str(params_path),
+            "--priv",
+            str(alice_priv),
+            "--pub",
+            str(alice_pub),
+        ]
+    )
     assert rc_fail == 1
 
-    rc_force = main([
-        "keygen",
-        "-p", str(params_path),
-        "--priv", str(alice_priv),
-        "--pub", str(alice_pub),
-        "--force",
-    ])
+    rc_force = main(
+        [
+            "keygen",
+            "-p",
+            str(params_path),
+            "--priv",
+            str(alice_priv),
+            "--pub",
+            str(alice_pub),
+            "--force",
+        ]
+    )
     assert rc_force == 0
 
-    rc = main([
-        "derive",
-        "--priv", str(alice_priv),
-        "--peer", str(bob_pub),
-        "--fingerprint",
-        "-o", str(secret_bin),
-    ])
+    rc = main(
+        [
+            "derive",
+            "--priv",
+            str(alice_priv),
+            "--peer",
+            str(bob_pub),
+            "--fingerprint",
+            "-o",
+            str(secret_bin),
+        ]
+    )
     assert rc == 0
     assert secret_bin.exists()
 
-    rc = main([
-        "derive",
-        "--priv", str(alice_priv),
-        "--peer", str(bob_pub),
-        "--hex",
-        "-o", str(secret_hex),
-    ])
+    rc = main(
+        [
+            "derive",
+            "--priv",
+            str(alice_priv),
+            "--peer",
+            str(bob_pub),
+            "--hex",
+            "-o",
+            str(secret_hex),
+        ]
+    )
     assert rc == 0
     assert secret_hex.exists()
 
-    rc = main([
-        "derive",
-        "--priv", str(alice_priv),
-        "--peer", str(bob_pub),
-        "--strip-zeros",
-        "-o", str(tmp_path / "secret_stripped.bin"),
-    ])
+    rc = main(
+        [
+            "derive",
+            "--priv",
+            str(alice_priv),
+            "--peer",
+            str(bob_pub),
+            "--strip-zeros",
+            "-o",
+            str(tmp_path / "secret_stripped.bin"),
+        ]
+    )
     assert rc == 0
 
-    rc = main([
-        "encrypt",
-        "--priv", str(alice_priv),
-        "--peer", str(bob_pub),
-        "-p", str(plain_txt),
-        "-o", str(cipher_bin),
-    ])
+    rc = main(
+        [
+            "encrypt",
+            "--priv",
+            str(alice_priv),
+            "--peer",
+            str(bob_pub),
+            "-p",
+            str(plain_txt),
+            "-o",
+            str(cipher_bin),
+        ]
+    )
     assert rc == 0
 
-    rc = main([
-        "decrypt",
-        "--priv", str(bob_priv),
-        "--peer", str(alice_pub),
-        "-p", str(cipher_bin),
-        "-o", str(decrypted_txt),
-    ])
+    rc = main(
+        [
+            "decrypt",
+            "--priv",
+            str(bob_priv),
+            "--peer",
+            str(alice_pub),
+            "-p",
+            str(cipher_bin),
+            "-o",
+            str(decrypted_txt),
+        ]
+    )
     assert rc == 0
     assert decrypted_txt.read_bytes() == plain_txt.read_bytes()
 
-    rc = main([
-        "encrypt",
-        "-k", str(secret_bin),
-        "-p", str(plain_txt),
-        "-o", str(cipher_bin),
-    ])
+    rc = main(
+        [
+            "encrypt",
+            "-k",
+            str(secret_bin),
+            "-p",
+            str(plain_txt),
+            "-o",
+            str(cipher_bin),
+        ]
+    )
     assert rc == 0
 
-    rc = main([
-        "decrypt",
-        "-k", str(secret_hex),
-        "-p", str(cipher_bin),
-        "-o", str(decrypted_txt),
-    ])
+    rc = main(
+        [
+            "decrypt",
+            "-k",
+            str(secret_hex),
+            "-p",
+            str(cipher_bin),
+            "-o",
+            str(decrypted_txt),
+        ]
+    )
     assert rc == 0
     assert decrypted_txt.read_bytes() == plain_txt.read_bytes()
 
 
-def test_cli_derive_terminal_safety(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cli_derive_terminal_safety(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Verifies refusal to dump raw secrets to a terminal."""
     params_path = tmp_path / "dhp.pem"
     alice_priv = tmp_path / "alice.pem"
     alice_pub = tmp_path / "alice.pub.pem"
 
     main(["genparams", "--bits", "512", "-o", str(params_path)])
-    main(["keygen", "-p", str(params_path), "--priv", str(alice_priv), "--pub", str(alice_pub)])
+    main(
+        [
+            "keygen",
+            "-p",
+            str(params_path),
+            "--priv",
+            str(alice_priv),
+            "--pub",
+            str(alice_pub),
+        ]
+    )
 
     class TtyStdout:
         def isatty(self) -> bool:
             return True
 
     monkeypatch.setattr("sys.stdout", TtyStdout())
-    rc = main(["derive", "--priv", str(alice_priv), "--peer", str(alice_pub), "-o", "-"])
+    rc = main(
+        ["derive", "--priv", str(alice_priv), "--peer", str(alice_pub), "-o", "-"]
+    )
     assert rc == 1
 
 

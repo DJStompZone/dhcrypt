@@ -79,9 +79,7 @@ def write_private(spec: str | Path, data: bytes, force: bool = False) -> None:
     try:
         descriptor = os.open(path_str, flags, 0o600)
     except FileExistsError as exc:
-        raise DHIOError(
-            f"{spec} already exists (use --force to overwrite)"
-        ) from exc
+        raise DHIOError(f"{spec} already exists (use --force to overwrite)") from exc
     except OSError as exc:
         raise DHIOError(f"cannot write {spec}: {exc.strerror}") from exc
     try:

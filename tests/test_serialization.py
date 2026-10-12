@@ -104,7 +104,9 @@ def test_load_params_from_bytes_pkcs3_pem() -> None:
     """Tests loading DH parameters from standard PKCS#3 PEM format."""
     der = _encode_der_sequence(_encode_der_int(23) + _encode_der_int(5))
     b64 = base64.b64encode(der).decode()
-    pem = f"-----BEGIN DH PARAMETERS-----\n{b64}\n-----END DH PARAMETERS-----\n".encode()
+    pem = (
+        f"-----BEGIN DH PARAMETERS-----\n{b64}\n-----END DH PARAMETERS-----\n".encode()
+    )
 
     params = load_params_from_bytes(pem)
     assert params.p == 23
@@ -114,7 +116,9 @@ def test_load_params_from_bytes_pkcs3_pem() -> None:
 def test_load_params_from_bytes_corrupted_pkcs3_der() -> None:
     """Tests that corrupted PKCS#3 DER in PEM causes DHParameterError."""
     b64 = base64.b64encode(b"invalid der sequence").decode()
-    pem = f"-----BEGIN DH PARAMETERS-----\n{b64}\n-----END DH PARAMETERS-----\n".encode()
+    pem = (
+        f"-----BEGIN DH PARAMETERS-----\n{b64}\n-----END DH PARAMETERS-----\n".encode()
+    )
     with pytest.raises(DHParameterError):
         load_params_from_bytes(pem)
 

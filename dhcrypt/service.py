@@ -70,9 +70,7 @@ def derive_shared_secret(
     Returns:
         Raw shared secret bytes.
     """
-    return compute_shared_from_keys(
-        priv_pem, peer_pem, strip_zeros=strip_zeros
-    )
+    return compute_shared_from_keys(priv_pem, peer_pem, strip_zeros=strip_zeros)
 
 
 def encrypt_message(secret: bytes, plaintext: bytes) -> bytes:

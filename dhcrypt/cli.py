@@ -58,9 +58,7 @@ def run_derive(args: argparse.Namespace) -> None:
     """
     priv_data = read_bytes(args.priv)
     peer_data = read_bytes(args.peer)
-    secret = derive_shared_secret(
-        priv_data, peer_data, strip_zeros=args.strip_zeros
-    )
+    secret = derive_shared_secret(priv_data, peer_data, strip_zeros=args.strip_zeros)
     if args.fingerprint:
         digest = hashes.Hash(hashes.SHA256())
         digest.update(secret)
@@ -105,9 +103,7 @@ def setup_argparse() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="mode", required=True)
 
     gp = sub.add_parser("genparams", help="generate DH parameters (PKCS#3 PEM)")
-    gp.add_argument(
-        "--bits", type=int, default=2048, help="prime size (default 2048)"
-    )
+    gp.add_argument("--bits", type=int, default=2048, help="prime size (default 2048)")
     gp.add_argument("-o", "--out", default="-", help="output file (default stdout)")
     gp.set_defaults(func=run_genparams)
 

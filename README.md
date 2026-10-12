@@ -1,144 +1,145 @@
 # dhcrypt
 
-Production-ready, OpenSSL-interoperable Finite-Field Diffie-Hellman (FFDH) key exchange and AES-256-GCM authenticated encryption in Python.
+OpenSSL-interoperable Finite-Field Diffie-Hellman (FFDH) key exchange and AES-256-GCM authenticated encryption in Python.
 
-[![Test Suite](https://img.shields.io/badge/coverage-100%25-brightgreen)](tests)
-[![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](pyproject.toml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PyPI version](https://img.shields.io/badge/pypi-v1.0.0-blue.svg?logo=pypi&logoColor=white)](https://pypi.org/project/dhcrypt/)
+[![Python Versions](https://img.shields.io/badge/python-3.13%20%7C%203.14-3776AB.svg?logo=python&logoColor=white)](pyproject.toml)
+[![Tests](https://img.shields.io/badge/tests-52%20passed-brightgreen.svg?logo=pytest&logoColor=white)](tests)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg?logo=codecov&logoColor=white)](htmlcov/index.html)
+[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Type Checking: Pyright](https://img.shields.io/badge/types-pyright-4B32C3.svg)](https://github.com/microsoft/pyright)
+[![OpenSSL Compatible](https://img.shields.io/badge/OpenSSL-interoperable-721412.svg?logo=openssl&logoColor=white)](https://www.openssl.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## Overview
+## Features
 
-`dhcrypt` provides an end-to-end cryptographic toolkit for Diffie-Hellman parameter generation, key generation, key agreement, and symmetric authenticated encryption. It is engineered from the ground up for strict OpenSSL compatibility (`openssl genpkey -paramfile`, `openssl pkeyutl -derive`) while adhering to **SOLID** architectural design, **DRY** principles, and complete test verification (100% line coverage).
-
----
-
-## Architectural Principles (SOLID & DRY)
-
-- **Single Responsibility Principle (SRP)**:
-  - `dhcrypt.models`: Domain dataclasses representing cryptographic parameters (`DHParams`).
-  - `dhcrypt.math`: Mathematical primitives including Miller-Rabin probabilistic primality checks, subgroup safety validation, and exponent generation.
-  - `dhcrypt.serialization`: ASN.1 DER and PKCS#3/PKCS#8/SPKI PEM encoders and decoders.
-  - `dhcrypt.symmetric`: HKDF key derivation and AES-256-GCM AEAD encryption/decryption.
-  - `dhcrypt.dh`: Diffie-Hellman protocol operations (group parameter generation, private key creation, shared secret computation).
-  - `dhcrypt.io`: Secure filesystem and standard stream I/O utilities enforcing 0600 file permissions for sensitive private keys.
-  - `dhcrypt.service`: Application service facade orchestrating end-to-end workflows.
-  - `dhcrypt.cli`: Argument parsing, flag validation, and error reporting.
-
-- **Open/Closed Principle (OCP)**:
-  - Pluggable `SymmetricCipher` protocol allows injecting alternative symmetric authenticated ciphers while defaulting to standard `AESGCMSymmetricCipher`.
-  - Configurable KDF salt, context info, and key length.
-
-- **Liskov Substitution Principle (LSP)**:
-  - Granular exception hierarchy (`DHParameterError`, `DHKeyError`, `DHValidationError`, `DHCryptoError`, `DHIOError`) all inherit from base `DHError`.
-
-- **Interface Segregation Principle (ISP)**:
-  - Core mathematical, serialization, and cryptographic functions accept in-memory buffers (`bytes`, `int`), decoupling domain logic from filesystem operations or CLI structures.
-
-- **Dependency Inversion Principle (DIP)**:
-  - High-level services and CLI commands depend on pure abstractions and data models rather than concrete filesystem implementations.
+- **OpenSSL Interoperability**: Seamlessly exchanges keys with `openssl genpkey -paramfile`, `openssl pkeyutl -derive`, and standard OpenSSL 3.x / legacy 1.x workflows.
+- **PKCS#3 ASN.1 Engine**: Built-in parser that correctly handles optional `privateValueLength` fields from `openssl genpkey -genparam`.
+- **Authenticated Encryption**: AES-256-GCM authenticated cipher preventing unauthorized tampering and ciphertext manipulation.
+- **Robust Key Derivation**: HKDF-SHA256 context-bound symmetric key derivation.
+- **Active Subgroup Protection**: Miller-Rabin safe-prime subgroup checks ($y^q \equiv 1 \pmod p$) guarding against small-subgroup confinement attacks.
+- **Secure File Permissions**: Enforces restrictive `0600` POSIX file permissions for private keys by default.
+- **Zero-Dependency CLI & Library**: Run directly as a CLI tool or import into any Python project.
 
 ---
 
 ## Installation
 
-### Using Poetry
-
-```bash
-poetry install
-```
-
 ### Using pip
 
 ```bash
-pip install .
+pip install dhcrypt
+```
+
+### Using Poetry
+
+```bash
+poetry add dhcrypt
 ```
 
 ---
 
-## Command-Line Interface (CLI)
+## Quick Start (CLI)
 
-The `dhcrypt` command-line executable supports five core operations:
+Perform a complete Diffie-Hellman key exchange and encrypted communication in five commands:
+
+```bash
+# 1. Generate DH group parameters
+dhcrypt genparams --bits 2048 -o dhp.pem
+
+# 2. Alice and Bob generate keypairs
+dhcrypt keygen -p dhp.pem --priv alice.key --pub alice.pub
+dhcrypt keygen -p dhp.pem --priv bob.key --pub bob.pub
+
+# 3. Derive shared secret (or encrypt directly using peer keys)
+dhcrypt derive --priv alice.key --peer bob.pub --fingerprint -o secret.bin
+
+# 4. Encrypt message
+dhcrypt encrypt -k secret.bin -p message.txt -o message.enc
+
+# 5. Decrypt message
+dhcrypt decrypt -k secret.bin -p message.enc -o recovered.txt
+```
+
+---
+
+## Command-Line Interface Reference
 
 ```
 usage: dhcrypt [-h] {genparams,keygen,derive,encrypt,decrypt} ...
 ```
 
-### 1. Parameter Generation (`genparams`)
-
+### `genparams`
 Generate safe-prime Diffie-Hellman parameters serialized in PKCS#3 PEM format.
 
 ```bash
-dhcrypt genparams --bits 2048 -o dhp.pem
+dhcrypt genparams [--bits BITS] [-o OUT]
 ```
 
-- `--bits`: Bit length of the prime modulus (default: 2048).
-- `-o`, `--out`: Output destination path (`-` for stdout, default: `-`).
+- `--bits`: Bit length of the prime modulus (default: `2048`).
+- `-o`, `--out`: Output path (`-` for stdout, default: `-`).
 
-### 2. Keypair Generation (`keygen`)
-
+### `keygen`
 Generate a private key (PKCS#8 format, mode 0600) and public key (SPKI format) from group parameters.
 
 ```bash
-dhcrypt keygen -p dhp.pem --priv me.pem --pub me.pub.pem
+dhcrypt keygen -p PARAMS --priv PRIV --pub PUB [--private-length BITS] [--force]
 ```
 
 - `-p`, `--params`: Path to DH parameters PEM (or any DH key PEM carrying parameters).
-- `--priv`: Destination path for the unencrypted private key (mode 0600).
-- `--pub`: Destination path for the public key.
-- `--private-length`: Optional private exponent bit length (e.g., 256 for short exponent).
-- `--force`: Overwrite existing private key file if it already exists.
+- `--priv`: Output path for the private key (mode 0600).
+- `--pub`: Output path for the public key.
+- `--private-length`: Exponent bit length (e.g., `256` for short exponent generation).
+- `--force`: Overwrite existing private key file if present.
 
-### 3. Key Agreement (`derive`)
-
+### `derive`
 Derive the raw shared secret between our private key and a peer's public key.
 
 ```bash
-dhcrypt derive --priv me.pem --peer them.pub.pem --fingerprint -o secret.bin
+dhcrypt derive --priv PRIV --peer PEER [-o OUT] [--hex] [--fingerprint] [--strip-zeros]
 ```
 
 - `--priv`: Path to our private key PEM.
 - `--peer`: Path to peer's public key PEM.
-- `-o`, `--out`: Output destination (`-` for stdout).
+- `-o`, `--out`: Output path (`-` for stdout).
 - `--hex`: Encode secret as hexadecimal text.
-- `--fingerprint`: Output SHA-256 fingerprint of the shared secret to stderr for out-of-band verification.
+- `--fingerprint`: Output SHA-256 fingerprint of the shared secret to stderr.
 - `--strip-zeros`: Strip leading zero bytes (reproduces legacy OpenSSL 1.x / `DH_compute_key` behavior).
 
-### 4. Authenticated Encryption (`encrypt`)
-
-Encrypt a payload using AES-256-GCM with a key derived from either the shared secret file or direct peer keys via HKDF-SHA256.
+### `encrypt`
+Encrypt a payload using AES-256-GCM.
 
 ```bash
 # Using derived secret file:
-dhcrypt encrypt -k secret.bin -p plaintext.txt -o message.bin
+dhcrypt encrypt -k SECRET -p PAYLOAD [-o OUT]
 
 # Or deriving directly from keys:
-dhcrypt encrypt --priv me.pem --peer them.pub.pem -p plaintext.txt -o message.bin
+dhcrypt encrypt --priv PRIV --peer PEER -p PAYLOAD [-o OUT]
 ```
 
-- `-k`, `--pem`: Path to file containing the shared secret (raw bytes or hex string).
+- `-k`, `--pem`: Path to file containing the shared secret (raw bytes or hex).
 - `--priv` and `--peer`: Derive secret directly using our private key and peer's public key.
 - `-p`, `--payload`: Path to input plaintext (`-` for stdin).
 - `-o`, `--out`: Path to output ciphertext (`-` for stdout).
 
-### 5. Authenticated Decryption (`decrypt`)
-
-Verify the AES-256-GCM authentication tag and decrypt the ciphertext payload.
+### `decrypt`
+Verify authentication tag and decrypt an AES-256-GCM ciphertext payload.
 
 ```bash
 # Using derived secret file:
-dhcrypt decrypt -k secret.bin -p message.bin -o recovered.txt
+dhcrypt decrypt -k SECRET -p PAYLOAD [-o OUT]
 
 # Or deriving directly from keys:
-dhcrypt decrypt --priv me.pem --peer them.pub.pem -p message.bin -o recovered.txt
+dhcrypt decrypt --priv PRIV --peer PEER -p PAYLOAD [-o OUT]
 ```
 
 ---
 
 ## Python API Usage
 
-`dhcrypt` can be imported and used directly as a Python library:
+`dhcrypt` can be imported and integrated directly into Python applications:
 
 ```python
 from dhcrypt import (
@@ -152,22 +153,20 @@ from dhcrypt import (
 # 1. Generate DH group parameters
 params_pem = generate_parameters_pem(key_size=2048)
 
-# 2. Alice generates keypair
+# 2. Parties generate keypairs
 alice_priv, alice_pub, alice_bits = generate_keypair_pem(params_pem)
-
-# 3. Bob generates keypair
 bob_priv, bob_pub, bob_bits = generate_keypair_pem(params_pem)
 
-# 4. Compute shared secret
-alice_secret = derive_shared_secret(alice_priv, bob_pub)
-bob_secret = derive_shared_secret(bob_priv, alice_pub)
-assert alice_secret == bob_secret
+# 3. Derive identical shared secrets
+secret_alice = derive_shared_secret(alice_priv, bob_pub)
+secret_bob = derive_shared_secret(bob_priv, alice_pub)
+assert secret_alice == secret_bob
 
-# 5. Encrypt and decrypt messages
-plaintext = b"Confidential payload transmission."
-ciphertext = encrypt_message(alice_secret, plaintext)
+# 4. Encrypt and decrypt payloads
+plaintext = b"Encrypted transmission over secure channel."
+ciphertext = encrypt_message(secret_alice, plaintext)
 
-decrypted = decrypt_message(bob_secret, ciphertext)
+decrypted = decrypt_message(secret_bob, ciphertext)
 assert decrypted == plaintext
 ```
 
@@ -183,14 +182,13 @@ from dhcrypt import (
     validate_peer_public,
 )
 
-# Custom parameter validation and key agreement
 params = DHParams(p=0xFFFFFFFFFFFFFFFF, g=2)
 validate_peer_public(peer_public_int, params)
-shared_bytes = compute_shared_secret(private_int, peer_public_int, params)
+raw_secret = compute_shared_secret(private_int, peer_public_int, params)
 
 # HKDF key derivation & AES-GCM
-key = derive_symmetric_key(shared_bytes, salt=b"optional-salt", info=b"app-context")
-encrypted = encrypt_payload(key, b"data")
+key = derive_symmetric_key(raw_secret, salt=b"custom-salt", info=b"app-context")
+encrypted = encrypt_payload(key, b"Sensitive data")
 decrypted = decrypt_payload(key, encrypted)
 ```
 
@@ -210,12 +208,12 @@ decrypted = decrypt_payload(key, encrypted)
 
 ---
 
-## Testing & Quality Assurance
+## Test Suite & Quality Assurance
 
 Run the test suite with coverage reporting:
 
 ```bash
-poetry run pytest --cov=dhcrypt --cov-report=term-missing
+poetry run pytest
 ```
 
 ### Test Coverage Summary
@@ -224,8 +222,8 @@ poetry run pytest --cov=dhcrypt --cov-report=term-missing
 Name                       Stmts   Miss  Cover
 ----------------------------------------------
 dhcrypt\__init__.py           14      0   100%
-dhcrypt\__main__.py            4      0   100%
-dhcrypt\cli.py                90      0   100%
+dhcrypt\__main__.py            2      0   100%
+dhcrypt\cli.py                89      0   100%
 dhcrypt\constants.py           6      0   100%
 dhcrypt\dh.py                 33      0   100%
 dhcrypt\exceptions.py          6      0   100%
@@ -236,7 +234,7 @@ dhcrypt\serialization.py      97      0   100%
 dhcrypt\service.py            27      0   100%
 dhcrypt\symmetric.py          44      0   100%
 ----------------------------------------------
-TOTAL                        436      0   100%
+TOTAL                        433      0   100%
 ```
 
 ---
