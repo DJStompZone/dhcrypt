@@ -1,17 +1,48 @@
 [project]
 name = "dhcrypt"
-version = "0.1.0"
-description = ""
+version = "1.0.0"
+description = "OpenSSL-interoperable Diffie-Hellman key exchange and AES-256-GCM authenticated encryption"
 authors = [
     {name = "DJ Stomp",email = "85457381+DJStompZone@users.noreply.github.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13,<4.0"
 dependencies = [
     "cryptography (>=50.0.2,<51.0.0)"
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest (>=9.1.1,<10.0.0)",
+    "coverage (>=7.16.2,<8.0.0)",
+    "black (>=26.10.0,<27.0.0)",
+    "pyright (>=1.1.414,<2.0.0)",
+    "pytest-cov (>=7.1.0,<8.0.0)",
+    "poetry (>=2.5.1,<3.0.0)"
+]
+
+[project.scripts]
+dhcrypt = "dhcrypt.cli:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--cov=dhcrypt --cov-report=term-missing --cov-report=html"
+filterwarnings = [
+    "ignore::cryptography.utils.CryptographyDeprecationWarning"
+]
+
+[tool.coverage.run]
+source = ["dhcrypt"]
+
+[tool.coverage.report]
+fail_under = 95
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "pass"
+]
